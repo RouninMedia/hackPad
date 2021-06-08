@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>hackPad by Rounin Media</title>
+</head>
+
+<body>
+
+<div class="hackPad"></div>
+
+<script>
+
+var hackPad = document.getElementsByClassName('hackPad')[0];
+
+var hackPadHeader = document.createElement('header');
+
+/*
+var hackPadHeading = document.createElement('h1');
+hackPadHeading.textContent = 'hackPad';
+var hackPadHeadingAttribution = document.createElement('span');
+hackPadHeadingAttribution.textContent = ' by Rounin Media';
+hackPadHeading.appendChild(hackPadHeadingAttribution);
+hackPadHeader.appendChild(hackPadHeading);
+*/
+
+var buttonMarkup = document.createElement('button');
+buttonMarkup.setAttribute('type', 'button');
+buttonMarkup.classList.add('hackPad-markup-button');
+hackPadHeader.appendChild(buttonMarkup);
+
+var buttonStyles = document.createElement('button');
+buttonStyles.setAttribute('type', 'button');
+buttonStyles.classList.add('hackPad-styles-button');
+hackPadHeader.appendChild(buttonStyles);
+
+var buttonScripts = document.createElement('button');
+buttonScripts.setAttribute('type', 'button');
+buttonScripts.classList.add('hackPad-scripts-button');
+hackPadHeader.appendChild(buttonScripts);
+
+var buttonResult = document.createElement('button');
+buttonResult.setAttribute('type', 'button');
+buttonResult.classList.add('hackPad-result-button');
+hackPadHeader.appendChild(buttonResult);
+
+hackPad.appendChild(hackPadHeader);
+
+
+var hackPadBoxes = {};
+var hackPadBoxNames = ['Markup', 'Styles', 'Scripts'];
+
+for (var i = 0; i < hackPadBoxNames.length; i++) {
+
+    hackPadBoxes[hackPadBoxNames[i]] = document.createElement('div');
+    hackPadBoxes[hackPadBoxNames[i]].classList.add('hackPad-' + hackPadBoxNames[i].toLowerCase());
+    hackPadBoxes[hackPadBoxNames[i]].setAttribute('contenteditable', 'true');
+    hackPadBoxes[hackPadBoxNames[i]].textContent = hackPadBoxNames[i] + '...';
+    hackPad.appendChild(hackPadBoxes[hackPadBoxNames[i]]);
+}
+
+
+var hackPadResult;
+hackPadResult = document.createElement('iframe');
+hackPadResult.classList.add('hackPad-result');
+hackPadResult.setAttribute('srcdoc', '');
+hackPad.appendChild(hackPadResult);
+
+var hackPadStyleElement = document.createElement('style');
+document.head.appendChild(hackPadStyleElement);
+var hackPadStylesheet = document.styleSheets[(document.styleSheets.length - 1)];
+
+
+
+var hackPadStyles = [
+    
+    '.hackPad {display: grid; position: relative; grid-template-columns: calc(50% - 15px) calc(50% - 15px) 30px; grid-template-rows: 50% 50%; width: 96%; max-width: 96vw; max-height: calc(96vh - 12px); margin: 0 auto; padding: 0; font-family: courier, sans-serif; border-radius: 15px; box-shadow: 0 0 6px rgba(127, 127, 127);}',
+    '.hackPad header {position: relative; z-index: 12; width: 30px; transform: translate(0, 0); grid-area: 1 / 3 / 3 / 4; color: rgb(255, 255, 255); background-color: rgb(0, 0, 0); border-radius: 0 15px 15px 0; cursor: pointer; overflow: hidden; transition: all 0.6s linear;}',
+    '.hackPad header:hover {width: 80px; transform: translate(-50px, 0);}',
+    '.hackPad h1 {display: inline-block; font-size: 48px; line-height: 60px;}',
+    '.hackPad h1 span {display: none; font-size: 24px; line-height: 60px;}',
+    '.hackPad > div {position: relative; display: block; padding: 6px; color: rgb(255, 255, 255); font-size: 12px; line-height: 18px; text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3), -1px 1px 1px rgb(0, 0, 0, 0.3), -1px -1px 1px rgb(0, 0, 0, 0.3), 1px -1px 1px rgb(0, 0, 0, 0.3); border: 1px solid rgb(0, 0, 0); overflow: auto;}',
+    '.hackPad > div::before {content: \'hackPad\'; position: absolute; display: flex; top: 0; left: 0; width: 100%; height: 100%; justify-content: center; align-items: center; color: rgba(255, 255, 255, 0.1); font-size: 11vh; font-weight: 900; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2); opacity: 0.5; pointer-events: none;}',
+    '.hackPad > div::after {position: absolute; top: 0; right: 0; height: 20px; line-height: 20px; padding: 0 6px; text-align: right; color: rgb(255, 255, 255); font-size: 14px; font-weight: bold; text-transform: uppercase; text-shadow: none; border-bottom-left-radius: 2px;}',
+    '.hackPad > div:focus::after {opacity: 0;}',
+    '.hackPad-markup {z-index: 6; grid-area: 1 / 1 / 2 / 2; background-color: rgb(0, 0, 96); border-left: 2px solid rgb(0, 0, 0); border-top: none; border-radius: 15px 0 0 0;}',
+    '.hackPad-markup::after {content: \'Markup\'; background-color: rgb(100, 100, 195); box-shadow: 0 0 4px rgba(0, 0, 127);}',
+    '.hackPad-styles {grid-area: 1 / 2 / 2 / 3; background-color: rgb(0, 64, 0); border-right: 2px solid rgb(0, 0, 0); border-top: none;}',
+    '.hackPad-styles::after {content: \'Styles\'; background-color: rgb(100, 195, 0); box-shadow: 0 0 4px rgba(0, 63, 0);}',
+    '.hackPad-scripts {grid-area: 2 / 1 / 3 / 2; background-color: rgb(96, 0, 0); border-left: 2px solid rgb(0, 0, 0); border-bottom: none; border-radius: 0 0 0 15px;}',
+    '.hackPad-scripts::after {content: \'Scripts\'; background-color: rgb(255, 0, 0); box-shadow: 0 0 4px rgba(191, 0, 0);}',
+    '.hackPad-result {position: relative; grid-area: 2 / 2 / 3 / 3; border: 1px solid rgb(0, 0, 0); border-right: 2px solid rgb(0, 0, 0); border-bottom: none;}',
+    '.hackPad button {border-radius: 4px; cursor: pointer;}',
+    '.hackPad-markup-button {background-color: rgb(100, 100, 195); border: 1px solid rgb(0, 0, 191);}',
+    '.hackPad-styles-button {background-color: rgb(100, 195, 0); border: 1px solid rgb(0, 127, 0);}',
+    '.hackPad-scripts-button {background-color: rgb(255, 0, 0); border: 1px solid rgb(191, 0, 0);}',
+    '.hackPad-result-button {background-color: rgb(255, 255, 255); border: 1px solid rgb(255, 255, 255);}',
+    '.hackPad::after {content: \'hackPad\'; position: absolute; display: flex; top: 0; left: 0; z-index: 12; width: calc(100% - 80px); height: 0; justify-content: center; align-items: flex-end; color: rgba(255, 255, 255, 0); font-size: 22vh; font-weight: 900; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0); background-color: rgb(0, 0, 0); border-radius: 15px 0 0 15px; pointer-events: none;}',
+    '.hackPad.selecting::after {animation: selectinghackPad 1.2s linear;}',
+    '.hackPad.select-result {grid-template-columns: calc(100% - 30px) 30px;}',
+    '.hackPad header button {width: 24px; height: 24px; margin: 6px 3px; transition: all 0.6s linear;}',
+    '.hackPad header:hover button {width: 56px; height: 56px; margin: 6px 12px;}',
+    '.hackPad[class*="select-"] {grid-template-rows: 100%;}',
+    '.hackPad[class*="select-"] div {grid-area: 1 / 1 / 2 / 2; border-radius: 15px 0 0 15px;}',
+    '.hackPad[class*="select-"] .hackPad-result {grid-area: 1 / 2 / 2 / 3; border: none;}',
+    '.hackPad.select-result header {grid-area: 1 / 2 / 2 / 3;}',
+    '.hackPad.select-result div {display: none; grid-area: 1 / 1 / 2 / 2; border-radius: 15px 0 0 15px;}',
+    '.hackPad.select-result .hackPad-result {grid-area: 1 / 1 / 2 / 2; border-radius: 15px 0 0 15px;}',
+    '.hackPad.select-markup .hackPad-scripts, .hackPad.select-markup .hackPad-styles, .hackPad.select-styles .hackPad-markup, .hackPad.select-styles .hackPad-scripts, .hackPad.select-scripts .hackPad-markup, .hackPad.select-scripts .hackPad-styles {display: none;}',
+    '.hackPad.select-markup .hackPad-markup-button {box-shadow: 0 0 12px rgba(127, 127, 255);}',
+    '.hackPad.select-styles .hackPad-styles-button {box-shadow: 0 0 12px rgba(127, 255, 127);}',
+    '.hackPad.select-scripts .hackPad-scripts-button {box-shadow: 0 0 12px rgba(255, 127, 127);}',
+    '.hackPad.select-result .hackPad-result-button {box-shadow: 0 0 12px rgba(255, 255, 255);}',
+    '@keyframes selectinghackPad {0% {height: 0;} 11.9% {color: rgba(255, 255, 255, 0); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0);} 12% {color: rgba(255, 255, 255, 0.1); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);} 40% {height: 100%;} 60% {height: 100%;} 88% {color: rgba(255, 255, 255, 0.1); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);} 88.1% {color: rgba(255, 255, 255, 0); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0);} 100% {height: 0;}}',
+    '@media only screen and (max-aspect-ratio: 6/5) {.hackPad, .hackPad[class*="select-"] {grid-template-rows: calc(50% - 15px) calc(50% - 15px) 30px; grid-template-columns: 100%;} .hackPad-result, .hackPad[class*="select-"] .hackPad-result {grid-area: 1 / 1 / 2 / 2;} .hackPad.select-result {grid-template-rows: calc(100% - 30px) 30px;} .hackPad header {grid-area: 3 / 1 / 4 / 2;} .hackPad.select-result header {grid-area: 2 / 1 / 3 / 2;} .hackPad > div, .hackPad[class*="select-"] div {grid-area: 2 / 1 / 3 / 2;} .hackPad header {width: auto; height: 30px;} .hackPad header:hover {width: auto; height: 80px; transform: translate(0, -50px);} .hackPad header:hover button {margin: 12px 6px;} .hackPad::after {width: 100%;} .hackPad header button {margin: 3px 6px;} .hackPad-result {border: none;} .hackPad-result, .hackPad[class*="select-"] .hackPad-result {border-radius: 15px 15px 0 0;} .hackPad > div, .hackPad[class*="select-"] div {border-radius: 0;} .hackPad header {border-radius: 0 0 15px 15px;} .hackPad::after {border-radius: 15px 15px 0 0;} .hackPad > div::before, .hackPad::after {font-size: 18vw;} @keyframes selectinghackPad {0% {height: 0;} 11.9% {color: rgba(255, 255, 255, 0); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0);} 12% {color: rgba(255, 255, 255, 0.1); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);} 40% {height: calc(100% - 80px);} 60% {height: calc(100% - 80px);} 88% {color: rgba(255, 255, 255, 0.1); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);} 88.1% {color: rgba(255, 255, 255, 0); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0);} 100% {height: 0;}}}'
+];
+
+
+var hackPadStylesObject = {
+
+    '.POSITION' : [
+
+        {
+            Selectors : [
+            '.hackPad',
+            '.hackPad header',
+            '.hackPad > div',
+            '.hackPad-result'
+            ],
+
+            Styles : {
+            'position' : 'relative'
+            }
+        },
+
+        {
+
+            Selectors : [
+            '.hackPad::after',
+            '.hackPad > div::before',
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'position' : 'absolute'
+            }
+        }
+    ],
+
+    '.DISPLAY' : [
+
+        {
+            Selectors : [
+            '.hackPad h1'
+            ],
+
+            Styles : {
+            'display' : 'inline-block'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::before', 
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'display' : 'flex'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad'
+            ],
+
+            Styles : {
+            'display' : 'grid'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad h1 span',
+            '.hackPad.select-result div',
+            '.hackPad.select-markup .hackPad-scripts',
+            '.hackPad.select-markup .hackPad-styles',
+            '.hackPad.select-styles .hackPad-markup',
+            '.hackPad.select-styles .hackPad-scripts',
+            '.hackPad.select-scripts .hackPad-markup',
+            '.hackPad.select-scripts .hackPad-styles'
+            ],
+
+            Styles : {
+            'display' : 'none'
+            }
+        },
+    ],
+
+    '.CO-ORDINATES' : [
+
+        {
+            Selectors : [
+            '.hackPad::after',
+            '.hackPad > div::before'
+            ],
+
+            Styles : {
+            'top' : 0,
+            'left' : 0
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'top' : 0,
+            'right' : 0
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup'
+            ],
+
+            Styles : {
+            'z-index' : 6
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header',
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'z-index' : 12
+            }
+        }
+    ],
+
+    '.GRID-PARENT' : [
+
+        {
+            Selectors : [
+            '.hackPad'
+            ],
+
+            Styles : {
+            'grid-template-columns' : 'calc(50% - 15px) calc(50% - 15px) 30px',
+            'grid-template-rows' : '50% 50%'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad[class*="select-"]'
+            ],
+
+            Styles : {
+            'grid-template-rows' : '100%'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad.select-result'
+            ],
+
+            Styles : {
+            'grid-template-columns' : 'calc(100% - 30px) 30px'
+            }
+        }
+    ],
+
+    '.GRID-CHILD' : [
+
+        {
+            Selectors : [
+            '.hackPad header'
+            ],
+
+            Styles : {
+            'grid-area' : '1 / 3 / 3 / 4'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup',
+            '.hackPad[class*="select-"] div',
+            '.hackPad.select-result div',
+            '.hackPad.select-result .hackPad-result'
+            ],
+
+            Styles : {
+            'grid-area' : '1 / 1 / 2 / 2'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-styles',
+            '.hackPad[class*="select-"] .hackPad-result',
+            '.hackPad.select-result header'
+            ],
+
+            Styles : {
+            'grid-area' : '1 / 2 / 2 / 3'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-scripts'
+            ],
+
+            Styles : {
+            'grid-area' : '2 / 1 / 3 / 2'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-result'
+            ],
+
+            Styles : {
+            'grid-area' : '2 / 2 / 3 / 3'
+            }
+        }
+    ],
+
+    '.FLEX-CHILD' : [
+
+        {
+            Selectors : [
+            '.hackPad > div::before',
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'justify-content' : 'center'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::before'
+            ],
+
+            Styles : {
+            'align-items' : 'center'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'align-items' : 'flex-end'
+            }
+        }
+    ],
+
+
+    '.WIDTH_HEIGHT' : [
+
+        {
+            Selectors : [
+            '.hackPad > div::before'
+            ],
+
+            Styles : {
+            'width' : '100%',
+            'height' : '100%'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'width' : 'calc(100% - 80px)',
+            'height' : '0'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header'
+            ],
+
+            Styles : {
+            'width' : '30px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header:hover'
+            ],
+
+            Styles : {
+            'width' : '80px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'height' : '20px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad'
+            ],
+
+            Styles : {
+            'width' : '96%',
+            'max-width' : '96vw',
+            'max-height' : 'calc(96vh - 12px)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header button'
+            ],
+
+            Styles : {
+            'width' : '24px',
+            'height' : '24px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header:hover button'
+            ],
+
+            Styles : {
+            'width' : '56px',
+            'height' : '56px'
+            }
+        }
+    ],
+
+    '.MARGIN_PADDING' : [
+
+        {
+            Selectors : [
+            '.hackPad header:hover button'
+            ],
+
+            Styles : {
+            'margin' : '6px 12px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad'
+            ],
+
+            Styles : {
+            'margin' : '0 auto',
+            'padding' : '0'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad h1'
+            ],
+
+            Styles : {
+            'margin' : '0',
+            'padding' : '0'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header button'
+            ],
+
+            Styles : {
+            'margin' : '6px',
+            'padding' : '3px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div'
+            ],
+
+            Styles : {
+            'padding' : '24px 6px 6px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'padding' : '0 6px'
+            }
+        }
+    ],
+
+    '.TEXT-TYPEFACE' : [
+
+        {
+            Selectors : [
+            '.hackPad'
+            ],
+
+            Styles : {
+            'font-family' : 'courier, sans-serif'
+            }
+        }
+    ],
+
+    '.TEXT-COLOR' : [
+
+        {
+            Selectors : [
+            '.hackPad header',
+            '.hackPad > div',
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'color' : 'rgb(255, 255, 255)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::before'
+            ],
+
+            Styles : {
+            'color' : 'rgba(255, 255, 255, 0.1)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'color' : 'rgba(255, 255, 255, 0)'
+            }
+        }
+    ],
+
+    '.TEXT-SIZE' : [
+
+        {
+            Selectors : [
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'font-size' : '22vh'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::before'
+            ],
+
+            Styles : {
+            'font-size' : '11vh'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad h1'
+            ],
+
+            Styles : {
+            'font-size' : '48px',
+            'line-height' : '60px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad h1 span'
+            ],
+
+            Styles : {
+            'font-size' : '24px',
+            'line-height' : '60px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'font-size' : '14px',
+            'line-height' : '20px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div'
+            ],
+
+            Styles : {
+            'font-size' : '12px',
+            'line-height' : '18px'
+            }
+        }
+    ],
+
+    '.TEXT-PRESENTATION' : [
+
+        {
+            Selectors : [
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'text-align' : 'right'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::before',
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'font-weight' : '900'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'text-align' : 'right',
+            'font-weight' : '700',
+            'text-transform': 'uppercase',
+            'text-shadow' : 'none'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::before'
+            ],
+
+            Styles : {
+            'text-shadow' : '1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div'
+            ],
+
+            Styles : {
+            'text-shadow' : '1px 1px 1px rgba(0, 0, 0, 0.3), -1px 1px 1px rgb(0, 0, 0, 0.3), -1px -1px 1px rgb(0, 0, 0, 0.3), 1px -1px 1px rgb(0, 0, 0, 0.3)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'text-shadow' : '1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0)'
+            }
+        }
+    ],
+
+    '.BACKGROUND' : [
+
+        {
+            Selectors : [
+            '.hackPad header',
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'background-color' : 'rgb(0, 0, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup'
+            ],
+
+            Styles : {
+            'background-color' : 'rgb(0, 0, 96)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-styles'
+            ],
+
+            Styles : {
+            'background-color' : 'rgb(0, 64, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-scripts'
+            ],
+
+            Styles : {
+            'background-color' : 'rgb(96, 0, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup-button',
+            '.hackPad-markup::after'
+            ],
+
+            Styles : {
+            'background-color' : 'rgb(100, 100, 195)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-styles-button',
+            '.hackPad-styles::after'
+            ],
+
+            Styles : {
+            'background-color' : 'rgb(100, 195, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-scripts-button',
+            '.hackPad-scripts::after'
+            ],
+
+            Styles : {
+            'background-color' : 'rgb(255, 0, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-result-button'
+            ],
+
+            Styles : {
+            'background-color' : 'rgb(255, 255, 255)'
+            }
+        },
+    ],
+
+    '.BORDER' : [
+
+        {
+            Selectors : [
+            '.hackPad > div',
+            '.hackPad-result'
+            ],
+
+            Styles : {
+            'border' : '1px solid rgb(0, 0, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-styles',
+            '.hackPad-result'
+            ],
+
+            Styles : {
+            'border-right' : '2px solid rgb(0, 0, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup',
+            '.hackPad-scripts'
+            ],
+
+            Styles : {
+            'border-left' : '2px solid rgb(0, 0, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup',
+            '.hackPad-styles'
+            ],
+
+            Styles : {
+            'border-top' : 'none'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-scripts',
+            '.hackPad-result'
+            ],
+
+            Styles : {
+            'border-bottom' : 'none'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad[class*="select-"] .hackPad-result'
+            ],
+
+            Styles : {
+            'border' : 'none'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup-button'
+            ],
+
+            Styles : {
+            'border' : '1px solid rgb(0, 0, 191)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-styles-button'
+            ],
+
+            Styles : {
+            'border' : '1px solid rgb(0, 127, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-scripts-button'
+            ],
+
+            Styles : {
+            'border' : '1px solid rgb(191, 0, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-result-button'
+            ],
+
+            Styles : {
+            'border' : '1px solid rgb(255, 255, 255)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad'
+            ],
+
+            Styles : {
+            'border-radius' : '15px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad.select-result div',
+            '.hackPad.select-result .hackPad-result',
+            '.hackPad[class*="select-"] div',
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'border-radius' : '15px 0 0 15px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup'
+            ],
+
+            Styles : {
+            'border-radius' : '15px 0 0 0'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-scripts'
+            ],
+
+            Styles : {
+            'border-radius' : '0 0 0 15px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad button'
+            ],
+
+            Styles : {
+            'border-radius' : '4px'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header'
+            ],
+
+            Styles : {
+            'border-radius' : '0 15px 15px 0'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::after'
+            ],
+
+            Styles : {
+            'border-bottom-left-radius' : '2px'
+            }
+        }
+    ],
+
+    '.BOX-SHADOW' : [
+
+        {
+            Selectors : [
+            '.hackPad'
+            ],
+
+            Styles : {
+            'box-shadow' : '0 0 6px rgba(127, 127, 127)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad.select-markup .hackPad-markup-button'
+            ],
+
+            Styles : {
+            'box-shadow' : '0 0 12px rgba(127, 127, 255)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad.select-styles .hackPad-styles-button'
+            ],
+
+            Styles : {
+            'box-shadow' : '0 0 12px rgba(127, 255, 127)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad.select-scripts .hackPad-scripts-button'
+            ],
+
+            Styles : {
+            'box-shadow' : '0 0 12px rgba(255, 127, 127)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad.select-result .hackPad-result-button'
+            ],
+
+            Styles : {
+            'box-shadow' : '0 0 12px rgba(255, 255, 255)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-markup::after'
+            ],
+
+            Styles : {
+            'box-shadow' : '0 0 4px rgba(0, 0, 127)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-styles::after'
+            ],
+
+            Styles : {
+            'box-shadow' : '0 0 4px rgba(0, 63, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-scripts::after'
+            ],
+
+            Styles : {
+            'box-shadow' : '0 0 12px rgba(191, 0, 0)'
+            }
+        },
+    ],
+
+    '.ELEMENT-PRESENTATION' : [
+
+        {
+            Selectors : [
+            '.hackPad > div::before'
+            ],
+
+            Styles : {
+            'opacity' : '0.5'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div'
+            ],
+
+            Styles : {
+            'overflow' : 'auto'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header'
+            ],
+
+            Styles : {
+            'overflow' : 'hidden'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header',
+            '.hackPad button'
+            ],
+
+            Styles : {
+            'cursor' : 'pointer'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad > div::before',
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'pointer-events' : 'none'
+            }
+        }
+    ],
+
+    '.PSEUDO-ELEMENT-CONTENT' : [
+
+        {
+            Selectors : [
+            '.hackPad > div::before',
+            '.hackPad::after'
+            ],
+
+            Styles : {
+            'content' : 'hackPad'
+            }
+        }, 
+
+        {
+            Selectors : [
+            '.hackPad-markup::after'
+            ],
+
+            Styles : {
+            'content' : 'Markup'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-styles::after'
+            ],
+
+            Styles : {
+            'content' : 'Styles'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad-scripts::after'
+            ],
+
+            Styles : {
+            'content' : 'Scripts'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad div p::after'
+            ],
+
+            Styles : {
+            'content' : ' '
+            }
+        }
+    ],
+
+    '.TRANSFORM' : [
+
+        {
+            Selectors : [
+            '.hackPad header'
+            ],
+
+            Styles : {
+            'transform' : 'translate(0, 0)'
+            }
+        },
+
+        {
+            Selectors : [
+            '.hackPad header:hover'
+            ],
+
+            Styles : {
+            'transform' : 'translate(-50px, 0)'
+            }
+        }
+    ],
+
+    '.TRANSITION' : [
+
+        {
+            Selectors : [
+            '.hackPad header',
+            '.hackPad header button'
+            ],
+
+            Styles : {
+            'transition': 'all 0.6s linear'
+            }
+        }
+    ],
+
+
+    '.ANIMATION' : [
+
+        {
+            Selectors : [
+            '.hackPad.selecting::after'
+            ],
+
+            Styles : {
+            'animation' : 'selectinghackPad 1.2s linear'
+            }
+        }
+    ]
+
+
+    '@KEYFRAMES' : {
+
+        'selectinghackPad' : [
+
+            {
+                Frames : [
+                '0%'
+                ],
+
+                Styles : {
+                'height' : '0'
+                }
+            },
+
+            {
+                Frames : [
+                '11.9%'
+                ],
+
+                Styles : {
+                'color' : 'rgba(255, 255, 255, 0)',
+                'text-shadow' : '1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0)'
+                }
+            }
+        ]
+    }
+};
+
+
+
+
+/*
+
+@keyframes selectinghackPad {
+0% {height: 0;}
+11.9% {color: rgba(255, 255, 255, 0); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0);}
+
+
+12% {color: rgba(255, 255, 255, 0.1); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);}
+40% {height: 100%;}
+60% {height: 100%;}
+88% {color: rgba(255, 255, 255, 0.1); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);}
+88.1% {color: rgba(255, 255, 255, 0); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0);}
+100% {height: 0;}}
+
+
+
+@media only screen and (max-aspect-ratio: 6/5) {.hackPad, .hackPad[class*="select-"] {grid-template-rows: calc(50% - 15px) calc(50% - 15px) 30px; grid-template-columns: 100%;} .hackPad-result, .hackPad[class*="select-"] .hackPad-result {grid-area: 1 / 1 / 2 / 2;} .hackPad.select-result {grid-template-rows: calc(100% - 30px) 30px;} .hackPad header {grid-area: 3 / 1 / 4 / 2;} .hackPad.select-result header {grid-area: 2 / 1 / 3 / 2;} .hackPad > div, .hackPad[class*="select-"] div {grid-area: 2 / 1 / 3 / 2;} .hackPad header {width: auto; height: 30px;} .hackPad header:hover {width: auto; height: 80px; transform: translate(0, -50px);} .hackPad header:hover button {margin: 12px 6px;} .hackPad::after {width: 100%;} .hackPad header button {margin: 3px 6px;} .hackPad-result {border: none;} .hackPad-result, .hackPad[class*="select-"] .hackPad-result {border-radius: 15px 15px 0 0;} .hackPad > div, .hackPad[class*="select-"] div {border-radius: 0;} .hackPad header {border-radius: 0 0 15px 15px;} .hackPad::after {border-radius: 15px 15px 0 0;} .hackPad > div::before, .hackPad::after {font-size: 18vw;}
+
+@keyframes selectinghackPad {0% {height: 0;} 11.9% {color: rgba(255, 255, 255, 0); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0);} 12% {color: rgba(255, 255, 255, 0.1); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);} 40% {height: calc(100% - 80px);} 60% {height: calc(100% - 80px);} 88% {color: rgba(255, 255, 255, 0.1); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);} 88.1% {color: rgba(255, 255, 255, 0); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0), -1px -1px 2px rgba(255, 255, 255, 0);} 100% {height: 0;}}}'
+*/
+
+  /*********************/
+ /* CUSTOM ATTRIBUTES */
+/*********************/
+
+if (hackPad.dataset.hasOwnProperty('pad')) {hackPad.classList.add('select-' + hackPad.dataset.pad);}
+if (hackPad.dataset.hasOwnProperty('width')) {hackPadStyles.push('.hackPad {width: ' + hackPad.dataset.width + ';}');}
+if (hackPad.dataset.hasOwnProperty('height')) {hackPadStyles.push('.hackPad {height: ' + hackPad.dataset.height + ';}');}
+
+
+  /**********************/
+ /* CODEPAD DIMENSIONS */
+/**********************/
+
+var i = 0;
+
+while (i < hackPadStyles.length) {
+
+    hackPadStylesheet.insertRule(hackPadStyles[i], i);
+
+    i++;
+
+    if ((i === hackPadStyles.length) && (hackPad.dataset.hasOwnProperty('height') === false)) {
+
+        if (window.matchMedia('(max-aspect-ratio: 6/5)').matches) {
+
+            hackPadStylesheet.insertRule('.hackPad {height: ' + (hackPad.offsetWidth * 1.618) + 'px;}', i);
+        }
+
+        else {
+
+            hackPadStylesheet.insertRule('.hackPad {height: ' + (hackPad.offsetWidth / 1.618) + 'px;}', i);
+        }
+    }
+}
+
+
+function displayResult(e) {
+
+    var hackPadStylesCode = '<head><style>' + hackPadBoxes['Styles'].textContent.trim() + '</style></head>';
+    var hackPadMarkupCode = '<body>' + hackPadBoxes['Markup'].textContent;
+    var hackPadScriptsCode = '<scr' + 'ipt>' + hackPadBoxes['Scripts'].textContent + '</scr' + 'ipt></body>';
+
+    hackPadResult.srcdoc = hackPadStylesCode + hackPadMarkupCode + hackPadScriptsCode;
+}
+
+document.body.addEventListener('keyup', displayResult, false);
+
+
+function focusPad() {
+
+    this.textContent = '\u200b';
+
+}
+
+
+for (let i = 0; i < hackPadBoxNames.length; i++) {
+
+    hackPadBoxes[hackPadBoxNames[i]].addEventListener('focus', focusPad, {once: true, passive: true, capture: false});
+
+}
+
+
+
+
+function selectPad(e) {
+
+    var currentPad;
+    var selectedPad;
+
+    if (hackPad.className !== 'hackPad') {
+
+        currentPad = hackPad.className.replace('hackPad ', '');
+    }
+
+    if (e.target.nodeName === 'BUTTON') {
+    
+        selectedPad = e.target.classList[0];
+        selectedPad = selectedPad.replace('hackPad-', '');
+        selectedPad = selectedPad.replace('-button', '');
+        selectedPad = 'select-' + selectedPad;
+
+
+        if (selectedPad !== currentPad) {
+        
+            setTimeout(function(){hackPad.classList.add(selectedPad);}, 590);
+        }
+    }
+
+    hackPad.classList.add('selecting');
+    setTimeout(function(){hackPad.classList.remove(currentPad);}, 600);
+    setTimeout(function(){hackPad.classList.remove('selecting');}, 1200);
+}
+
+
+hackPadHeader.addEventListener('click', selectPad, false);
+
+</script>
+
+</body>
+</html>
+
+<!--
+
+INSTRUCTIONS TO  ADD React.js
+=============================
+
+<div id="like_button_container"></div>
+
+1) To MARKUP, add:
+<div id="like_button_container"></div>
+
+
+<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+
+
+2) TO SCRIPT, add:
+
+'use strict';
+
+const e = React.createElement;
+
+class LikeButton extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { liked: false };
+  }
+
+  render() {
+    if (this.state.liked) {
+      return 'You liked this.';
+    }
+
+    return e(
+      'button',
+      { onClick: () => this.setState({ liked: true }) },
+      'Like'
+    );
+  }
+}
+
+const domContainer = document.querySelector('#like_button_container');
+ReactDOM.render(e(LikeButton), domContainer);
+
+-->
